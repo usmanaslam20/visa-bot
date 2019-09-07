@@ -408,7 +408,3 @@ def run(argv=None):
         bot.shutdown = True
         interactive_loop.join()
         notification_loop.join()
-
-
-if __name__ == '__main__':
-    sys.exit(run())
