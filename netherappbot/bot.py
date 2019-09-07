@@ -50,9 +50,19 @@ import requests
 from bs4 import BeautifulSoup
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, DateTime, Boolean
+import sentry_sdk
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+from sentry_sdk.integrations.threading import ThreadingIntegration
+
+import netherappbot
 
 Base = declarative_base()
 p = inflect.engine()
+
+sentry_sdk.init(
+    dsn='https://2f8d735e6c2a4bd5880e4ec065602807@sentry.io/1568089',
+    integrations=[SqlalchemyIntegration(), ThreadingIntegration()],
+)
 
 
 class LastUpdate(Base):
@@ -298,17 +308,21 @@ class Bot(object):
         text = message.text
         chat_id = message.chat.id
 
-        self.logger.info('<== %d: %s', chat_id, text)
+        with sentry_sdk.configure_scope() as scope:
+            scope.set_context('text', text)
+            scope.user = {'id': chat_id}
 
-        user = session.query(User).filter(User.chat_id == chat_id).first()
-        if user is None:
-            user = User(chat_id=chat_id, subscribed=False)
-            session.add(user)
+            self.logger.info('<== %d: %s', chat_id, text)
 
-        if text.startswith('/'):
-            self.on_command(session, user, text)
-        else:
-            self.on_plain_message(session, user, text)
+            user = session.query(User).filter(User.chat_id == chat_id).first()
+            if user is None:
+                user = User(chat_id=chat_id, subscribed=False)
+                session.add(user)
+
+            if text.startswith('/'):
+                self.on_command(session, user, text)
+            else:
+                self.on_plain_message(session, user, text)
 
     def on_command(self, session, user, message):
         command = message.split(' ', 1)[0]
