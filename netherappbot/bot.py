@@ -34,7 +34,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 import logging
 import argparse
-import sys
 import datetime
 import contextlib
 import textwrap
@@ -53,8 +52,6 @@ from sqlalchemy import Column, Integer, DateTime, Boolean
 import sentry_sdk
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from sentry_sdk.integrations.threading import ThreadingIntegration
-
-import netherappbot
 
 Base = declarative_base()
 p = inflect.engine()
@@ -98,33 +95,33 @@ INTERVAL = 5
 
 class TEXTS(object):
     GREETINGS = textwrap.dedent('''\
-        Hi! I watch for appointments to the Netherlands embassy in Dublin.
-        I'm checking [this page]({}) each *{}* seconds.
+        Hi! I look for appointments to the Netherlands embassy in Dublin.
+        I check [this page]({}) each *{}* seconds.
 
         You can subscribe to notifications with /subscribe command.
         Feel free to check /help and /terms.''').format(WELCOME_PAGE, INTERVAL)
     HELP = textwrap.dedent('''\
-        I'm watching for appointments to the Netherlands embassy in Dublin.
-        I'm checking [this page]({}) each *{}* seconds.
+        I look for appointments to the Netherlands embassy in Dublin.
+        I check [this page]({}) each *{}* seconds.
 
         *Available commands*
 
-        /start - Just greetings. Just tells me that I can talk with you.
+        /start - Just tells me that I can talk to you.
         /help - This message.
-        /terms - Information about terms of use and collected information.
+        /terms - Information about terms of use and collected data.
         /subscribe - Subscribe for notifications. I will send you a message \
 when I see an appointment.
-        /unsubscribe - Unsubscribe for notification.''').format(
+        /stats - Show some statstics data.
+        /unsubscribe - Unsubscribe for notifications.''').format(
             WELCOME_PAGE, INTERVAL)
     TERMS = textwrap.dedent('''\
         *Collected data*
 
         This bot *does not* use, collect or keep any personal data. It does not
-        even uses your username. However it uses and keeps:
+        even use your username. However it uses and keeps:
 
-         - Telegram chat id (not user id) - It's required to send a message \
-to you.
-         - Your subscription state - It will not know that you need a \
+         - Telegram chat id (not user id) - It's required to send you a message.
+         - Your subscription status - It will not know that you need a \
 notification without it. You should opt-in for it with /subscribe command.
          - Your messages to this bot - Bot keeps history for maintenance \
 purposes.
@@ -133,18 +130,21 @@ purposes.
 
         Please note, author does not control, support or maintain this bot.
         He just wrote the code for personal use and published it.
-        You can freely contribute. You can launch our copy of this bot.
+        You can freely contribute. You can launch your own copy of this bot.
 
         Source code is hosted [here](https://github.com/alex-ac/netherappbot)
 
         {}
         ''').format(__doc__)
     SUBSCRIBED = textwrap.dedent('''\
-        I will notify when find an appointment to the Netherlands embassy in \
-Dublin.
+        *I will notify when find an appointment to the Netherlands embassy in \
+Dublin.*
+        Please note that there is a problem to open the link for booking from \
+mobile devices on the side of the embassy's booking system. Use a PC/laptop \
+when possible.
         You can disable notifications with /unsubscribe command.''')
     UNSUBSCRIBED = textwrap.dedent('''\
-        Ok, I will not send notifications to you anymore.
+        Ok, I will not send you notifications anymore.
         Feel free to subscribe again with /subscribe command.''')
     UNKNOWN_COMMAND = textwrap.dedent('''\
         Sorry, I don't know this command: {}
@@ -176,7 +176,7 @@ def loop(interval, ignore=()):
                                 f(self, session)
                                 session.commit()
                             except ignore:
-                                self.logger.error(
+                                self.logger.warning(
                                     'Transient exception caught',
                                     exc_info=True)
                                 continue
@@ -185,9 +185,14 @@ def loop(interval, ignore=()):
                             f(self, session)
                             session.commit()
                     time.sleep(interval)
+            except KeyboardInterrupt:
+                pass
+            except:
+                self.logger.info('Exiting %s', f.__name__, exc_info=True)
+            else:
+                self.logger.info('Exiting %s', f.__name__)
             finally:
                 self.shutdown = True
-                self.logger.error('Exiting %s', f.__name__, exc_info=True)
 
         return wrapper
 
@@ -377,14 +382,17 @@ class Bot(object):
             last_event = event
 
         watching_for = datetime.datetime.utcnow() - first_event.timestamp
-        watching_for = datetime.timedelta(seconds=watching_for // datetime.timedelta(seconds=1))
-        seen_appointments = datetime.timedelta(seconds=seen_appointments // datetime.timedelta(seconds=1))
+        watching_for = datetime.timedelta(
+            seconds=watching_for // datetime.timedelta(seconds=1))
+        seen_appointments = datetime.timedelta(
+            seconds=seen_appointments // datetime.timedelta(seconds=1))
 
         self.reply(session, user, TEXTS.STATISTICS.format(
-            users_plural=p.plural_verb('is', subscribed_users) + p.no(' person', subscribed_users),
+            users_plural=(
+                p.plural_verb('is', subscribed_users) +
+                p.no(' person', subscribed_users)),
             watching_for=watching_for,
             seen_appointments=seen_appointments))
-
 
     def on_unknown_command(self, session, user, message):
         self.reply(session, user, TEXTS.UNKNOWN_COMMAND)

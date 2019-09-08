@@ -39,4 +39,11 @@ setup(
         'requests==2.22.0',
         'sentry-sdk==0.11.2',
     ],
+    setup_requires=[
+        'pytest-runner==5.1',
+    ],
+    tests_require=[
+        'pytest==5.1.2',
+        'pytest-flake8==1.0.4',
+    ],
 )
