@@ -187,10 +187,6 @@ def loop(interval, ignore=()):
                     time.sleep(interval)
             except KeyboardInterrupt:
                 pass
-            except:
-                self.logger.info('Exiting %s', f.__name__, exc_info=True)
-            else:
-                self.logger.info('Exiting %s', f.__name__)
             finally:
                 self.shutdown = True
 
