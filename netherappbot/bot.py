@@ -382,7 +382,11 @@ class Bot(object):
                     seen_appointments += delta
             last_event = event
 
-        watching_for = datetime.datetime.utcnow() - first_event.timestamp
+        now = datetime.datetime.utcnow()
+        if first_event is None:
+            first_event = AppointmentEvent(timestamp=now)
+
+        watching_for = now - first_event.timestamp
         watching_for = datetime.timedelta(
             seconds=watching_for // datetime.timedelta(seconds=1))
         seen_appointments = datetime.timedelta(
