@@ -200,6 +200,12 @@ def loop(interval, ignore=()):
     return decorator
 
 
+class Context(object):
+    def __init__(self, session, user):
+        self.session = session
+        self.user = user
+
+
 class Bot(object):
     def __init__(self, bot, database):
         super(Bot, self).__init__()
@@ -325,54 +331,58 @@ class Bot(object):
                 user = User(chat_id=chat_id, subscribed=False)
                 session.add(user)
 
-            if text.startswith('/'):
-                self.on_command(session, user, text)
-            else:
-                self.on_plain_message(session, user, text)
+            context = Context(session, user)
 
-    def on_command(self, session, user, message):
+            if text.startswith('/'):
+                self.on_command(context, text)
+            else:
+                self.on_plain_message(context, text)
+
+    def on_command(self, context, message):
         command = message.split(' ', 1)[0]
         if '/start' == command:
-            self.on_start(session, user, message)
+            self.on_start(context, message)
         elif '/help' == command:
-            self.on_help(session, user, message)
+            self.on_help(context, message)
         elif '/terms' == command:
-            self.on_terms(session, user, message)
+            self.on_terms(context, message)
         elif '/subscribe' == command:
-            self.on_subscribe(session, user, message)
+            self.on_subscribe(context, message)
         elif '/unsubscribe' == command:
-            self.on_unsubscribe(session, user, message)
+            self.on_unsubscribe(context, message)
         elif '/stats' == command:
-            self.on_stats(session, user, message)
+            self.on_stats(context, message)
         else:
-            self.on_unknown_command(session, user, message)
+            self.on_unknown_command(context, message)
 
-    def on_start(self, session, user, message):
-        self.reply(session, user, TEXTS.GREETINGS)
+    def on_start(self, context, message):
+        self.reply(context, TEXTS.GREETINGS)
 
-    def on_help(self, session, user, message):
-        self.reply(session, user, TEXTS.HELP)
+    def on_help(self, context, message):
+        self.reply(context, TEXTS.HELP)
 
-    def on_terms(self, session, user, message):
-        self.reply(session, user, TEXTS.TERMS)
+    def on_terms(self, context, message):
+        self.reply(context, TEXTS.TERMS)
 
-    def on_subscribe(self, session, user, message):
-        user.subscribed = True
-        self.logger.info('Subscribing user with chat_id: %d', user.chat_id)
-        self.reply(session, user, TEXTS.SUBSCRIBED)
+    def on_subscribe(self, context, message):
+        context.user.subscribed = True
+        self.logger.info(
+            'Subscribing user with chat_id: %d', context.user.chat_id)
+        self.reply(context, TEXTS.SUBSCRIBED)
 
-    def on_unsubscribe(self, session, user, message):
-        user.subscribed = False
-        self.logger.info('Unsubscribing user with chat_id: %d', user.chat_id)
-        self.reply(session, user, TEXTS.UNSUBSCRIBED)
+    def on_unsubscribe(self, context, message):
+        context.user.subscribed = False
+        self.logger.info(
+            'Unsubscribing user with chat_id: %d', context.user.chat_id)
+        self.reply(context, TEXTS.UNSUBSCRIBED)
 
-    def on_stats(self, session, user, message):
-        subscribed_users = session.query(User).filter(
+    def on_stats(self, context, message):
+        subscribed_users = context.session.query(User).filter(
             User.subscribed == True).count()  # noqa: E721
         first_event = None
         last_event = None
         seen_appointments = datetime.timedelta(seconds=0)
-        for event in session.query(AppointmentEvent).order_by(
+        for event in context.session.query(AppointmentEvent).order_by(
                 AppointmentEvent.timestamp).all():
             if first_event is None:
                 first_event = event
@@ -392,26 +402,26 @@ class Bot(object):
         seen_appointments = datetime.timedelta(
             seconds=seen_appointments // datetime.timedelta(seconds=1))
 
-        self.reply(session, user, TEXTS.STATISTICS.format(
+        self.reply(context, TEXTS.STATISTICS.format(
             users_plural=(
                 p.plural_verb('is', subscribed_users) +
                 p.no(' person', subscribed_users)),
             watching_for=watching_for,
             seen_appointments=seen_appointments))
 
-    def on_unknown_command(self, session, user, message):
-        self.reply(session, user, TEXTS.UNKNOWN_COMMAND)
+    def on_unknown_command(self, context, message):
+        self.reply(context, TEXTS.UNKNOWN_COMMAND)
 
-    def on_plain_message(self, session, user, message):
-        self.reply(session, user, TEXTS.DONT_UNDERSTAND)
+    def on_plain_message(self, context, message):
+        self.reply(context, TEXTS.DONT_UNDERSTAND)
 
-    def reply(self, session, user, text):
+    def reply(self, context, text):
         try:
-            self.logger.info('==> %d: %s', user.chat_id, text)
+            self.logger.info('==> %d: %s', context.user.chat_id, text)
             self.bot.send_message(
-                user.chat_id, text, telegram.ParseMode.MARKDOWN)
+                context.user.chat_id, text, telegram.ParseMode.MARKDOWN)
         except telegram.error.Unauthorized:
-            session.delete(user)
+            context.session.delete(context.user)
 
 
 def run(argv=None):
