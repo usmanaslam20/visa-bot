@@ -256,7 +256,8 @@ class Bot(object):
 
         for user in session.query(User).filter(
                 User.subscribed == True).all():  # noqa: E712
-            self.reply(session, user, text)
+            context = Context(session, user)
+            self.reply(context, text)
 
         event.notification_sent = True
 
