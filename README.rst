@@ -40,12 +40,12 @@ How to setup a bot
 
 
     For a description of the Bot API, see this page: https://core.telegram.org/bots/api
-    > /start - Just tells me that I can talk to you.
-    /help - Help for commands.
-    /terms - Information about terms of use and collected data.
-    /subscribe - Subscribe for notifications.
-    /unsubscribe - Unsubscribe for notifications.
-    /stats - Show some statistics data.
+    > start - Just tells me that I can talk to you.
+    help - Help for commands.
+    terms - Information about terms of use and collected data.
+    subscribe - Subscribe for notifications.
+    unsubscribe - Unsubscribe for notifications.
+    stats - Show some statistics data.
     < Success! Command list updated. /help
 
 4. Optionally setup userpic & description.
