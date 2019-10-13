@@ -4,7 +4,8 @@ It checks the booking system every 5 seconds and sends alerts if there are some
 available. It doesn't use or store personal or private data. Wish you best of
 luck with your visa.
 
-## How to setup a bot
+How to setup a bot
+==================
 
 1. Start conversation with https://t.me/BotFather
 2. Create a new bot::
