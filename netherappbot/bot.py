@@ -294,9 +294,10 @@ class Bot(object):
 
         soup = self.load_page('application', action, method='POST', data=args)
 
-        response = (
-            soup.find(id='plhMain_lblMsg').string or
-            soup.find(id='plhMain_lblFillAppDetails').string)
+        response_element = (
+            soup.find(id='plhMain_lblMsg') or
+            soup.find(id='plhMain_lblFillAppDetails'))
+        response = response_element.string
         logging.info('Response: %s', response)
 
         last_event = session.query(AppointmentEvent).order_by(
