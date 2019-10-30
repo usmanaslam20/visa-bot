@@ -12,6 +12,7 @@ import textwrap
 import functools
 import threading
 import time
+import re
 from urllib.parse import urljoin
 
 import inflect
@@ -28,9 +29,30 @@ from sentry_sdk.integrations.threading import ThreadingIntegration
 Base = declarative_base()
 p = inflect.engine()
 
+BOT_TOKEN_RE = re.compile(r'[0-9]+:[A-Za-z0-9+/=]+')
+
+
+def strip_bot_token(event, hint):
+    if isinstance(event, dict):
+        return {
+            key: strip_bot_token(value, hint)
+            for key, value in event.items()
+        }
+    elif isinstance(event, list):
+        return [
+            strip_bot_token(value, hint)
+            for value in event
+        ]
+    elif isinstance(event, str) and BOT_TOKEN_RE.find(event):
+        return BOT_TOKEN_RE.sub(event, '<BOT_TOKEN>')
+    else:
+        return event
+
+
 sentry_sdk.init(
     dsn='https://2f8d735e6c2a4bd5880e4ec065602807@sentry.io/1568089',
     integrations=[SqlalchemyIntegration(), ThreadingIntegration()],
+    before_send=strip_bot_token,
 )
 
 
