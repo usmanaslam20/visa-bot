@@ -37,7 +37,7 @@ setup(
         'inflect==2.1.0',
         'python-telegram-bot==12.0.0',
         'requests==2.22.0',
-        'sentry-sdk==0.11.2',
+        'sentry-sdk==0.13.1',
     ],
     setup_requires=[
         'pytest-runner==5.1',
