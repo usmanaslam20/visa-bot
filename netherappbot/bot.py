@@ -285,10 +285,10 @@ class Bot(object):
 
     def load_page(self, stage, url, method='GET', data=None):
         logging.info('%s: %s %s -> %r', stage, method, url, data)
-        response = self.session.request(method, url, data=data).text
+        response = self.session.request(method, url, data=data)
 
         if response.status_code >= 200 and response.status_code < 300:
-            return BeautifulSoup(response, 'html.parser')
+            return BeautifulSoup(response.text, 'html.parser')
 
         return None
 
