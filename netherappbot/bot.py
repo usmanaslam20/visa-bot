@@ -287,7 +287,7 @@ class Bot(object):
         logging.info('%s: %s %s -> %r', stage, method, url, data)
         response = self.session.request(method, url, data=data).text
 
-        if response.status >= 200 and response.status < 300:
+        if response.status_code >= 200 and response.status_code < 300:
             return BeautifulSoup(response, 'html.parser')
 
         return None
