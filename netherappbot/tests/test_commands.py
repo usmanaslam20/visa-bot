@@ -10,7 +10,7 @@ import time
 from ..bot import Bot, TEXTS
 
 
-class TestedBot(Bot):
+class MockBot(Bot):
     @property
     def shutdown(self):
         return self.bot._fixture._next_event is None
@@ -103,7 +103,7 @@ def test_start():
         .input_message(1, '/start')
         .expect_message(1, TEXTS.GREETINGS)
     )
-    bot = TestedBot(fixture.client, 'sqlite:///:memory:')
+    bot = MockBot(fixture.client, 'sqlite:///:memory:')
     bot.interactive_loop()
 
 
@@ -113,7 +113,7 @@ def test_help():
         .input_message(1, '/help')
         .expect_message(1, TEXTS.HELP)
     )
-    bot = TestedBot(fixture.client, 'sqlite:///:memory:')
+    bot = MockBot(fixture.client, 'sqlite:///:memory:')
     bot.interactive_loop()
 
 
@@ -123,7 +123,7 @@ def test_terms():
         .input_message(1, '/terms')
         .expect_message(1, TEXTS.TERMS)
     )
-    bot = TestedBot(fixture.client, 'sqlite:///:memory:')
+    bot = MockBot(fixture.client, 'sqlite:///:memory:')
     bot.interactive_loop()
 
 
@@ -133,7 +133,7 @@ def test_subscribe():
         .input_message(1, '/subscribe')
         .expect_message(1, TEXTS.SUBSCRIBED)
     )
-    bot = TestedBot(fixture.client, 'sqlite:///:memory:')
+    bot = MockBot(fixture.client, 'sqlite:///:memory:')
     bot.interactive_loop()
 
 
@@ -143,7 +143,7 @@ def test_unsubscribe():
         .input_message(1, '/unsubscribe')
         .expect_message(1, TEXTS.UNSUBSCRIBED)
     )
-    bot = TestedBot(fixture.client, 'sqlite:///:memory:')
+    bot = MockBot(fixture.client, 'sqlite:///:memory:')
     bot.interactive_loop()
 
 
@@ -156,7 +156,7 @@ def test_stats():
             watching_for=datetime.timedelta(0),
             seen_appointments=datetime.timedelta(0)))
     )
-    bot = TestedBot(fixture.client, 'sqlite:///:memory:')
+    bot = MockBot(fixture.client, 'sqlite:///:memory:')
     bot.interactive_loop()
 
 
@@ -166,7 +166,7 @@ def test_unknown_command():
         .input_message(1, '/someunexistentcommand')
         .expect_message(1, TEXTS.UNKNOWN_COMMAND)
     )
-    bot = TestedBot(fixture.client, 'sqlite:///:memory:')
+    bot = MockBot(fixture.client, 'sqlite:///:memory:')
     bot.interactive_loop()
 
 
@@ -176,5 +176,5 @@ def test_message():
         .input_message(1, 'Hello!')
         .expect_message(1, TEXTS.DONT_UNDERSTAND)
     )
-    bot = TestedBot(fixture.client, 'sqlite:///:memory:')
+    bot = MockBot(fixture.client, 'sqlite:///:memory:')
     bot.interactive_loop()
