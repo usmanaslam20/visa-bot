@@ -217,7 +217,7 @@ class Bot(object):
         self.session = requests.Session()
         self.shutdown = False
 
-    @loop(0)
+    @loop(0, ignore=(ConnectionError, telegram.error.NetworkError))
     def interactive_loop(self, session):
         last_update = session.query(LastUpdate).first()
         if last_update is not None:
@@ -265,7 +265,10 @@ class Bot(object):
         logging.info('%s: %s %s -> %r', stage, method, url, data)
         response = self.session.request(method, url, data=data).text
 
-        return BeautifulSoup(response, 'html.parser')
+        if response.status >= 200 and response.status < 300:
+            return BeautifulSoup(response, 'html.parser')
+
+        return None
 
     def extract_form_data(self, soup):
         frm_web = soup.find(id='frmWeb')
@@ -277,15 +280,20 @@ class Bot(object):
         }
         return urljoin(BASE_URL, frm_web.get('action')), args
 
-    @loop(INTERVAL, ignore=(requests.exceptions.ConnectionError,))
+    @loop(INTERVAL, ignore=(requests.exceptions.ConnectionError, TimeoutError))
     def watching_loop(self, session):
         soup = self.load_page('welcome', WELCOME_PAGE)
+        if soup is None:
+            return
+
         action, args = self.extract_form_data(soup)
         args['__EVENTTARGET'] = 'ctl00$plhMain$lnkSchApp'
         args['__EVENTARGUMENT'] = ''
 
         soup = self.load_page(
             'appointment_type', action, method='POST', data=args)
+        if soup is None:
+            return
         action, args = self.extract_form_data(soup)
         # Number of applicants: 1
         args['ctl00$plhMain$tbxNumOfApplicants'] = 1
@@ -297,6 +305,9 @@ class Bot(object):
         response_element = (
             soup.find(id='plhMain_lblMsg') or
             soup.find(id='plhMain_lblFillAppDetails'))
+        if response_element is None:
+            return
+
         response = response_element.string
         logging.info('Response: %s', response)
 
