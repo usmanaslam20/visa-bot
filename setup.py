@@ -36,7 +36,7 @@ setup(
         'beautifulsoup4==4.8.0',
         'inflect==2.1.0',
         'python-telegram-bot==12.0.0',
-        'requests==2.22.0',
+        'requests==2.31.0',
         'sentry-sdk==0.13.1',
     ],
     setup_requires=[
